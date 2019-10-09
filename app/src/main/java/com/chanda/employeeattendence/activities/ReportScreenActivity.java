@@ -77,7 +77,6 @@ public class ReportScreenActivity extends AppCompatActivity implements ReportScr
         String empName = intent.getStringExtra("name");
         String empId = intent.getStringExtra("id");
         List testLit = new ArrayList();
-        //tvHeading.setText(empName + " Attendance Report for " + month + " " + year);
 
         presenter = new ReportScreenActivityContract(this, this);
         int monthNumber = getMonthNumber(month);
@@ -170,11 +169,11 @@ public class ReportScreenActivity extends AppCompatActivity implements ReportScr
             difference -= TimeUnit.HOURS.toMillis(hour);
             long minutes = TimeUnit.MILLISECONDS.toMinutes(difference);
             String time = String.valueOf(hour) + "." + String.valueOf(minutes);
-            System.out.println("getDiff " + time);
-            if (d1.getDay() == 1) {
+            //System.out.println("getDiff " + time);
+            if (d1.getDay() == 7) {
                 attendanceModel.setDayOfMonth(dayOfMonth);
                 attendanceModel.setLoggedHours("Sunday");
-            } else if (d1.getDay() == 7) {
+            } else if (d1.getDay() == 6) {
                 attendanceModel.setDayOfMonth(dayOfMonth);
                 attendanceModel.setLoggedHours("Saturday");
             } else {
