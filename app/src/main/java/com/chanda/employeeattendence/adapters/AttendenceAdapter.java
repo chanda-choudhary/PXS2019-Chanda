@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.chanda.employeeattendence.R;
+import com.chanda.employeeattendence.activities.ReportScreenActivity;
 import com.chanda.employeeattendence.model.AttendanceModel;
 import com.chanda.employeeattendence.model.AttendanceParam;
 
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AttendenceAdapter extends RecyclerView.Adapter<AttendenceAdapter.ViewHolder> {
-    private List<AttendanceModel> attendanceModels;
+    private List<AttendanceModel> attendanceModels=new ArrayList<>();
     private Context mContext;
 
     public AttendenceAdapter(List<AttendanceModel> attendanceModels, Context mContext) {
@@ -36,8 +37,9 @@ public class AttendenceAdapter extends RecyclerView.Adapter<AttendenceAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.tvDateOfMonth.setText(Integer.toString(attendanceModels.get(position).getDayOfMonth()));
-        holder.tvNoOfHoursLogged.setText(Double.toString(attendanceModels.get(position).getLoggedHours()));
+        //System.out.println("LoggedHours:"+ attendanceModels.getDayOfMonth().get(position));
+        holder.tvDateOfMonth.setText(""+attendanceModels.get(position).getDayOfMonth());
+        holder.tvNoOfHoursLogged.setText(attendanceModels.get(position).getLoggedHours());
     }
 
     @Override

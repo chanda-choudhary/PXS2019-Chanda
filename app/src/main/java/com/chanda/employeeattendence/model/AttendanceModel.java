@@ -2,12 +2,7 @@ package com.chanda.employeeattendence.model;
 
 public class AttendanceModel {
     int dayOfMonth;
-    Double loggedHours;
-
-    public AttendanceModel(int dayOfMonth, Double loggedHours) {
-        this.dayOfMonth = dayOfMonth;
-        this.loggedHours = loggedHours;
-    }
+    String loggedHours;
 
     public int getDayOfMonth() {
         return dayOfMonth;
@@ -17,11 +12,11 @@ public class AttendanceModel {
         this.dayOfMonth = dayOfMonth;
     }
 
-    public Double getLoggedHours() {
+    public String getLoggedHours() {
         return loggedHours;
     }
 
-    public void setLoggedHours(Double loggedHours) {
+    public void setLoggedHours(String loggedHours) {
         this.loggedHours = loggedHours;
     }
 }

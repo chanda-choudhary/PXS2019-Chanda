@@ -1,5 +1,6 @@
 package com.chanda.employeeattendence.activities;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,11 +21,16 @@ import com.chanda.employeeattendence.model.EmployeeAttendanceDetail;
 import com.chanda.employeeattendence.presenter.ReportScreenActivityPresenter;
 import com.chanda.employeeattendence.view.ReportScreenActivityView;
 
+import java.sql.Time;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -34,18 +40,26 @@ import java.util.concurrent.TimeUnit;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
+import static java.util.Arrays.asList;
+
 public class ReportScreenActivity extends AppCompatActivity implements ReportScreenActivityView {
     @BindView(R.id.tv_report_heading)
     TextView tvHeading;
+    @BindView(R.id.tv_hours_logged)
+    TextView tvTotalHrLogded;
+    @BindView(R.id.tv_days_present)
+    TextView tvTotalDayPresent;
+    @BindView(R.id.tv_days_absent)
+    TextView tvTotalDayUpsent;
     @BindView(R.id.rv_report)
     RecyclerView rvReport;
 
     AttendenceAdapter adapter;
-    //    List<AttendanceParam> paramList = new ArrayList<>();
+    //List<AttendanceModel> paramList = new ArrayList<>();
     private ReportScreenActivityPresenter presenter;
     String entryAt, exitAt;
     double loggedHours;
-
+    LocalDate lastDate = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +76,7 @@ public class ReportScreenActivity extends AppCompatActivity implements ReportScr
         String year = intent.getStringExtra("year");
         String empName = intent.getStringExtra("name");
         String empId = intent.getStringExtra("id");
+        List testLit = new ArrayList();
         //tvHeading.setText(empName + " Attendance Report for " + month + " " + year);
 
         presenter = new ReportScreenActivityContract(this, this);
@@ -75,17 +90,9 @@ public class ReportScreenActivity extends AppCompatActivity implements ReportScr
         param.setEmpId(empId);
         param.setFromDate(fromDate);
         param.setToDate(toDate);
+
         // api call
         presenter.postEmployee(param);
-
-
-//        AttendanceModel attendanceModel=new AttendanceModel(1,8.5);
-//        adapter = new AttendenceAdapter(Collections.singletonList(attendanceModel), this);
-//        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
-//        mLayoutManager.setReverseLayout(true);
-//        mLayoutManager.setStackFromEnd(true);
-//        rvReport.setLayoutManager(mLayoutManager);
-//        rvReport.setAdapter(adapter);
 
     }
 
@@ -96,21 +103,18 @@ public class ReportScreenActivity extends AppCompatActivity implements ReportScr
 
     @Override
     public void postEmployeeSuccess(List<EmployeeAttendanceDetail> attendanceDetails) {
-        for (int i = 0; i < 1; i++) {
-            System.out.println("EmpId " + attendanceDetails.get(i).getEmpId() + "Entry at" + attendanceDetails.get(i).getEntryAt() + "Exit at " + attendanceDetails.get(i).getExitAt());
-            entryAt = attendanceDetails.get(i).getEntryAt();
-            exitAt = attendanceDetails.get(i).getExitAt();
-            double loggedHours = getLoggedInHours(entryAt, exitAt);
-            AttendanceModel attendanceModel = new AttendanceModel(i+1, loggedHours);
-            adapter = new AttendenceAdapter(Collections.singletonList(attendanceModel), this);
-            LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
-            mLayoutManager.setReverseLayout(true);
-            mLayoutManager.setStackFromEnd(true);
-            rvReport.setLayoutManager(mLayoutManager);
-            rvReport.setAdapter(adapter);
+        List<AttendanceModel> attendanceModelList = new ArrayList<>();
+        for (int i = 0; i < attendanceDetails.size(); i++) {
+
+            EmployeeAttendanceDetail attendanceDetail = attendanceDetails.get(i);
+            attendanceModelList.add(getLoggedInHours(i + 1, attendanceDetail.getEntryAt(), attendanceDetail.getExitAt()));
         }
-// set attendance detail
-        Toast.makeText(this, "get Employee Attendance data success", Toast.LENGTH_LONG).show();
+        adapter = new AttendenceAdapter(attendanceModelList, this);
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
+        rvReport.setLayoutManager(mLayoutManager);
+        rvReport.setAdapter(adapter);
+
+        setTotalAttendace(attendanceModelList);
     }
 
     @Override
@@ -139,7 +143,7 @@ public class ReportScreenActivity extends AppCompatActivity implements ReportScr
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             yearMonth = YearMonth.of(yearInInt, monthNumber);
         }
-        LocalDate lastDate = null;
+        //LocalDate lastDate = null;
         String lastDateInString = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             lastDate = yearMonth.atEndOfMonth();
@@ -148,8 +152,9 @@ public class ReportScreenActivity extends AppCompatActivity implements ReportScr
         return lastDateInString;
     }
 
-    public double getLoggedInHours(String entryAt, String exitAt) {
-        System.out.println("EntryAt:"+entryAt +" "+ exitAt);
+    public AttendanceModel getLoggedInHours(int dayOfMonth, String entryAt, String exitAt) {
+        AttendanceModel attendanceModel = new AttendanceModel();
+        System.out.println("EntryAt:" + entryAt + " " + exitAt);
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
         Date d1 = null;
@@ -165,13 +170,43 @@ public class ReportScreenActivity extends AppCompatActivity implements ReportScr
             difference -= TimeUnit.HOURS.toMillis(hour);
             long minutes = TimeUnit.MILLISECONDS.toMinutes(difference);
             String time = String.valueOf(hour) + "." + String.valueOf(minutes);
-            System.out.println("getDiff "+ time);
-            return Double.parseDouble(time);
+            System.out.println("getDiff " + time);
+            if (d1.getDay() == 1) {
+                attendanceModel.setDayOfMonth(dayOfMonth);
+                attendanceModel.setLoggedHours("Sunday");
+            } else if (d1.getDay() == 7) {
+                attendanceModel.setDayOfMonth(dayOfMonth);
+                attendanceModel.setLoggedHours("Saturday");
+            } else {
+                attendanceModel.setDayOfMonth(dayOfMonth);
+                attendanceModel.setLoggedHours(String.valueOf(Double.parseDouble(time)));
+            }
+
 
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        return 0;
+        return attendanceModel;
+    }
+
+    private void setTotalAttendace(List<AttendanceModel> attendanceModelList) {
+        int totalDayPresent = 0;
+        double totalHourPresent = 0;
+        int totalDayUpsent = 0;
+        for (AttendanceModel attendanceModel : attendanceModelList) {
+            if (!(attendanceModel.getLoggedHours().equals("Sunday")||attendanceModel.getLoggedHours().equals("Saturday"))) {
+                totalDayPresent++;
+                totalHourPresent = totalHourPresent + Double.parseDouble(attendanceModel.getLoggedHours());
+                if (totalHourPresent==0.0){
+                    totalDayUpsent++;
+                }
+            }
+        }
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        tvTotalDayPresent.setText(String.valueOf(totalDayPresent));
+        tvTotalHrLogded.setText(decimalFormat.format(totalHourPresent));
+        tvTotalDayUpsent.setText(String.valueOf(totalDayUpsent));
+
     }
 }
 

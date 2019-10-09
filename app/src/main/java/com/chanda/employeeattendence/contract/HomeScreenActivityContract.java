@@ -12,6 +12,7 @@ import com.chanda.employeeattendence.presenter.HomeScreenActivityPresenter;
 import com.chanda.employeeattendence.util.CommonUtil;
 import com.chanda.employeeattendence.view.HomeScreenActivityView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -22,6 +23,7 @@ public class HomeScreenActivityContract  implements HomeScreenActivityPresenter 
     private HomeScreenActivityView homeScreenActivityView;
     private Context mContext;
     private Dialog loadingDialog;
+    ArrayList<EmployeeModel> employeeModels = new ArrayList<>();
     public HomeScreenActivityContract(HomeScreenActivity homeScreenActivityView, Context mContext) {
         this.homeScreenActivityView = homeScreenActivityView;
         this.mContext = mContext;
@@ -38,7 +40,13 @@ public class HomeScreenActivityContract  implements HomeScreenActivityPresenter 
                 public void onResponse(Call<List<EmployeeModel>> call, Response<List<EmployeeModel>> response) {
                     loadingDialog.dismiss();
                     if (response.isSuccessful()){
-                        homeScreenActivityView.getEmployeeSuccess(response.body());
+                        EmployeeModel employeeModel = new EmployeeModel();
+                        employeeModel.setEmpId("0");
+                        employeeModel.setName("Select Employee");
+                        employeeModels.add(employeeModel);
+                      employeeModels.addAll(response.body());
+
+                        homeScreenActivityView.getEmployeeSuccess(employeeModels);
                     }else {
                         //Show error msg
                     }
